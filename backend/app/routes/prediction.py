@@ -3,7 +3,7 @@ from fastapi import APIRouter, Depends
 from app.schemas.prediction import PredictionInput
 from app.services.prediction_service import predict_mental_health
 from app.core.dependencies import get_current_user
-from datetime import datetime
+from datetime import datetime, timezone
 from app.core.database import history_collection
 from bson import ObjectId
 from statistics import mean
@@ -31,7 +31,7 @@ def predict(
     "prediction": result,
     "risk_level": insight["risk_level"],
     "suggestions": insight["suggestions"],
-    "created_at": datetime.utcnow()
+    "created_at": datetime.now(timezone.utc)
 })
 
     return {
@@ -49,7 +49,7 @@ def get_history(
         history_collection.find(
             {"email": current_user},
             {"_id": 0}
-        )
+        ).sort("created_at", -1)
     )
 
     return history

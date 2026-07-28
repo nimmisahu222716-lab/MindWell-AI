@@ -7,7 +7,7 @@ from app.core.database import users_collection
 
 import random
 
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 from app.utils.email_service import send_otp_email
 from app.core.database import otp_collection
@@ -54,8 +54,8 @@ def send_signup_otp(user: SendOTPRequest):
             "email": user.email,
             "password": hash_password(user.password),
             "otp": otp,
-            "expires_at": datetime.utcnow() + timedelta(minutes=5),
-            "created_at": datetime.utcnow()
+            "expires_at": datetime.now(timezone.utc) + timedelta(minutes=5),
+            "created_at": datetime.now(timezone.utc)
         }
     )
 
@@ -83,7 +83,11 @@ def verify_signup_otp(data: VerifyOTPRequest):
             detail="Invalid OTP"
         )
 
-    if datetime.utcnow() > otp_data["expires_at"]:
+    expires_at = otp_data["expires_at"]
+    if expires_at.tzinfo is None:
+        expires_at = expires_at.replace(tzinfo=timezone.utc)
+
+    if datetime.now(timezone.utc) > expires_at:
         otp_collection.delete_one({"_id": otp_data["_id"]})
         raise HTTPException(
             status_code=400,
@@ -97,8 +101,8 @@ def verify_signup_otp(data: VerifyOTPRequest):
             "password": otp_data["password"],
             "age": None,
             "gender": None,
-            "created_at": datetime.utcnow(),
-            "updated_at": datetime.utcnow()
+            "created_at": datetime.now(timezone.utc),
+            "updated_at": datetime.now(timezone.utc)
         }
     )
 
@@ -170,8 +174,8 @@ def forgot_password(data: ForgotPasswordRequest):
             "email": data.email,
             "otp": otp,
             "verified": False,
-            "expires_at": datetime.utcnow() + timedelta(minutes=5),
-            "created_at": datetime.utcnow()
+            "expires_at": datetime.now(timezone.utc) + timedelta(minutes=5),
+            "created_at": datetime.now(timezone.utc)
         }
     )
 
@@ -198,7 +202,11 @@ def verify_reset_otp(data: VerifyOTPRequest):
             detail="Invalid OTP"
         )
 
-    if datetime.utcnow() > otp_data["expires_at"]:
+    expires_at = otp_data["expires_at"]
+    if expires_at.tzinfo is None:
+        expires_at = expires_at.replace(tzinfo=timezone.utc)
+
+    if datetime.now(timezone.utc) > expires_at:
         otp_collection.delete_one({"_id": otp_data["_id"]})
         raise HTTPException(
             status_code=400,
@@ -242,7 +250,7 @@ def reset_password(data: ResetPasswordRequest):
         {
             "$set": {
                 "password": hash_password(data.new_password),
-                "updated_at": datetime.utcnow()
+                "updated_at": datetime.now(timezone.utc)
             }
         }
     )

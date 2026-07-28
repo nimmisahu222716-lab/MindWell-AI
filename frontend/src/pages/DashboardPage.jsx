@@ -17,6 +17,30 @@ import {
 } from 'recharts';
 import './DashboardPage.css';
 
+const parseUTCDate = (dateInput) => {
+  if (!dateInput) return new Date();
+  if (dateInput instanceof Date) return dateInput;
+  let str = String(dateInput).trim();
+  if (str.includes(' ') && !str.includes('T')) {
+    str = str.replace(' ', 'T');
+  }
+  if (str.includes('T') && !str.endsWith('Z') && !/[+-]\d{2}:?\d{2}$/.test(str)) {
+    str += 'Z';
+  }
+  return new Date(str);
+};
+
+const formatDateTime = (dateInput) => {
+  const dateObj = parseUTCDate(dateInput);
+  if (isNaN(dateObj.getTime())) return 'N/A';
+  const formattedDate = dateObj.toLocaleDateString();
+  const formattedTime = dateObj.toLocaleTimeString([], {
+    hour: '2-digit',
+    minute: '2-digit'
+  });
+  return `${formattedDate} at ${formattedTime}`;
+};
+
 export const DashboardPage = () => {
   const { 
     user, 
@@ -479,16 +503,7 @@ export const DashboardPage = () => {
                     </div>
                   ) : (
                     moodHistory.map((item, idx) => {
-                      const dateObj = new Date(item.created_at);
-                      const formattedDate = dateObj.toLocaleDateString('en-US', {
-                        month: 'short',
-                        day: 'numeric',
-                        year: 'numeric'
-                      });
-                      const formattedTime = dateObj.toLocaleTimeString('en-US', {
-                        hour: '2-digit',
-                        minute: '2-digit'
-                      });
+                      const formattedDateStr = formatDateTime(item.created_at);
 
                       const moodMeta = moodsList.find(m => m.name === item.mood);
                       const iconClass = moodMeta?.iconClass || 'fa-regular fa-face-smile';
@@ -506,7 +521,7 @@ export const DashboardPage = () => {
                           <p className="history-notes">"{item.note}"</p>
                           <div className="history-footer">
                             <i className="fa-solid fa-calendar-days"></i>
-                            <span>{formattedDate} at {formattedTime}</span>
+                            <span>{formattedDateStr}</span>
                           </div>
                         </div>
                       );
@@ -880,7 +895,7 @@ export const DashboardPage = () => {
                             </span>
                           </div>
                           <p className="pred-hist-time">
-                            {new Date(pred.created_at).toLocaleDateString()} at {new Date(pred.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
+                            {formatDateTime(pred.created_at)}
                           </p>
                         </div>
                       ))

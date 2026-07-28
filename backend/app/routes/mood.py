@@ -1,5 +1,4 @@
-from datetime import datetime
-from zoneinfo import ZoneInfo
+from datetime import datetime, timezone
 
 from fastapi import APIRouter, Depends
 
@@ -25,7 +24,7 @@ def save_mood(
         "mood": data.mood.title(),
         "stress_level": data.stress_level.title(),
         "note": data.note,
-        "created_at": datetime.now(ZoneInfo("Asia/Kolkata"))
+        "created_at": datetime.now(timezone.utc)
     })
 
     return {
