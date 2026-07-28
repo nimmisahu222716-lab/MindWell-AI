@@ -2,7 +2,7 @@ import React, { useState, useContext } from 'react';
 import { AuthContext } from '../context/AuthContext';
 import './AuthPage.css';
 
-export const AuthPage = () => {
+export const AuthPage = ({ initialMode = 'login', onBackHome }) => {
   const { 
     theme, 
     toggleTheme, 
@@ -15,7 +15,7 @@ export const AuthPage = () => {
   } = useContext(AuthContext);
 
   // States: 'login' | 'signup' | 'otp_verify' | 'forgot_password' | 'otp_reset_verify' | 'reset_password'
-  const [mode, setMode] = useState('login');
+  const [mode, setMode] = useState(initialMode);
   
   // Form fields
   const [email, setEmail] = useState('');
@@ -134,6 +134,17 @@ export const AuthPage = () => {
 
   return (
     <div className="auth-page-container">
+      {/* Back to Home Button */}
+      {onBackHome && (
+        <button 
+          className="back-home-btn animate-fade-in" 
+          onClick={onBackHome}
+          aria-label="Back to Home"
+        >
+          <i className="fa-solid fa-arrow-left"></i> <span>Back to Home</span>
+        </button>
+      )}
+
       {/* Theme Toggle Button */}
       <button className="theme-toggle-btn animate-fade-in" onClick={toggleTheme} aria-label="Toggle Theme">
         {theme === 'light' ? (

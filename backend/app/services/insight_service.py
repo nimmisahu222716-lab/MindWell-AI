@@ -2,10 +2,12 @@ def generate_insight(score: float, data: dict):
 
     suggestions = []
 
-    # Risk Level
-    if score < 4:
+    # Risk Level: High Mental Health Score (>= 7.5/10) = Low Risk
+    # Moderate Mental Health Score (5.0 to 7.4/10) = Moderate Risk
+    # Low Mental Health Score (< 5.0/10) = High Risk
+    if score >= 7.5:
         risk = "Low"
-    elif score < 7:
+    elif score >= 5.0:
         risk = "Moderate"
     else:
         risk = "High"

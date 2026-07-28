@@ -1,10 +1,12 @@
-import React, { useContext } from 'react';
+import React, { useContext, useState } from 'react';
 import { AuthProvider, AuthContext } from './context/AuthContext';
+import { HomePage } from './pages/HomePage';
 import { AuthPage } from './pages/AuthPage';
 import { DashboardPage } from './pages/DashboardPage';
 
 function DashboardOrAuth() {
   const { token, loading } = useContext(AuthContext);
+  const [authMode, setAuthMode] = useState(null);
 
   if (loading) {
     return (
@@ -26,7 +28,20 @@ function DashboardOrAuth() {
     );
   }
 
-  return token ? <DashboardPage /> : <AuthPage />;
+  if (token) {
+    return <DashboardPage />;
+  }
+
+  if (authMode) {
+    return (
+      <AuthPage 
+        initialMode={authMode} 
+        onBackHome={() => setAuthMode(null)} 
+      />
+    );
+  }
+
+  return <HomePage onOpenAuth={(mode) => setAuthMode(mode)} />;
 }
 
 function App() {

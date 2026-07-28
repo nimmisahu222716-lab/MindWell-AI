@@ -54,6 +54,7 @@ export const DashboardPage = () => {
   } = useContext(AuthContext);
   
   const [activeTab, setActiveTab] = useState('mood-tracker');
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   // Common notifications
   const [alert, setAlert] = useState({ type: '', message: '' });
@@ -189,12 +190,12 @@ export const DashboardPage = () => {
   // TAB 3: MENTAL HEALTH PREDICTOR
   // ==========================================
   const [predictInputs, setPredictInputs] = useState({
-    Study_Hours: 4,
-    Age: 20,
-    Avg_Daily_Usage_Hours: 3,
-    Daily_Unlocks: 30,
-    Physical_Activity_Hours: 1.5,
-    Sleep_Hours_Per_Night: 7,
+    Study_Hours: '4',
+    Age: '20',
+    Avg_Daily_Usage_Hours: '3',
+    Daily_Unlocks: '30',
+    Physical_Activity_Hours: '1.5',
+    Sleep_Hours_Per_Night: '7',
     Stress_Level: 'Low',
     Gender: 'Female',
     Academic_Level: 'Undergraduate',
@@ -218,15 +219,48 @@ export const DashboardPage = () => {
 
   const handlePredictSubmit = async (e) => {
     e.preventDefault();
+
+    const numericFields = [
+      { key: 'Age', label: 'Age' },
+      { key: 'Daily_Unlocks', label: 'Daily Unlocks' },
+      { key: 'Avg_Daily_Usage_Hours', label: 'Avg Social Media Hours' },
+      { key: 'Study_Hours', label: 'Study Hours' },
+      { key: 'Physical_Activity_Hours', label: 'Physical Activity Hours' },
+      { key: 'Sleep_Hours_Per_Night', label: 'Sleep Hours' }
+    ];
+
+    for (const field of numericFields) {
+      const rawVal = predictInputs[field.key];
+      const val = parseFloat(rawVal);
+      if (rawVal === '' || rawVal === null || rawVal === undefined || isNaN(val) || val <= 0) {
+        triggerAlert('error', `${field.label} must be a valid number greater than 0.`);
+        return;
+      }
+    }
+
     setLoadingAction(true);
     try {
+      const payload = {
+        ...predictInputs,
+        Age: parseInt(predictInputs.Age, 10),
+        Daily_Unlocks: parseInt(predictInputs.Daily_Unlocks, 10),
+        Avg_Daily_Usage_Hours: parseFloat(predictInputs.Avg_Daily_Usage_Hours),
+        Study_Hours: parseFloat(predictInputs.Study_Hours),
+        Physical_Activity_Hours: parseFloat(predictInputs.Physical_Activity_Hours),
+        Sleep_Hours_Per_Night: parseFloat(predictInputs.Sleep_Hours_Per_Night)
+      };
+
       const client = getApiClient();
-      const res = await client.post('/predict/', predictInputs);
+      const res = await client.post('/predict/', payload);
       setPredictionResult(res.data);
       triggerAlert('success', 'Mental health score predicted successfully!');
       fetchPredictionHistory();
     } catch (err) {
-      triggerAlert('error', err.response?.data?.detail || 'Prediction failed. Check input formats.');
+      const detail = err.response?.data?.detail;
+      const errorMsg = Array.isArray(detail)
+        ? detail.map(d => d.msg || d.detail).join(', ')
+        : detail || 'Prediction failed. Please ensure all values are greater than 0.';
+      triggerAlert('error', errorMsg);
     } finally {
       setLoadingAction(false);
     }
@@ -327,47 +361,79 @@ export const DashboardPage = () => {
 
   return (
     <div className="dashboard-grid">
-      {/* Sidebar Navigation */}
-      <aside className="dashboard-sidebar glass-card animate-fade-in">
+      {/* Mobile Top Header Bar with Menu Toggle on Right */}
+      <div className="mobile-header-bar glass-card">
         <div className="sidebar-brand">
           <span className="sidebar-logo-icon-fa text-accent">
             <i className="fa-solid fa-brain"></i>
           </span>
           <h2 className="sidebar-title">MindWell AI</h2>
         </div>
+        <button 
+          className="mobile-menu-toggle-btn"
+          onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+          aria-label="Toggle Navigation Menu"
+        >
+          <i className={`fa-solid ${mobileMenuOpen ? 'fa-xmark' : 'fa-bars'}`}></i>
+        </button>
+      </div>
+
+      {/* Mobile Drawer Overlay Backdrop */}
+      {mobileMenuOpen && (
+        <div 
+          className="mobile-drawer-overlay animate-fade-in" 
+          onClick={() => setMobileMenuOpen(false)} 
+        />
+      )}
+
+      {/* Sidebar Navigation (Right-side slide drawer on Mobile) */}
+      <aside className={`dashboard-sidebar glass-card ${mobileMenuOpen ? 'mobile-open' : ''}`}>
+        <div className="sidebar-brand">
+          <span className="sidebar-logo-icon-fa text-accent">
+            <i className="fa-solid fa-brain"></i>
+          </span>
+          <h2 className="sidebar-title">MindWell AI</h2>
+          <button 
+            className="mobile-drawer-close-btn"
+            onClick={() => setMobileMenuOpen(false)}
+            aria-label="Close Menu"
+          >
+            <i className="fa-solid fa-xmark"></i>
+          </button>
+        </div>
 
         <nav className="sidebar-nav">
           <button
             className={`nav-item-fa ${activeTab === 'mood-tracker' ? 'active' : ''}`}
-            onClick={() => setActiveTab('mood-tracker')}
+            onClick={() => { setActiveTab('mood-tracker'); setMobileMenuOpen(false); }}
           >
             <i className="fa-solid fa-heart"></i>
             <span>Mood Tracker</span>
           </button>
           <button
             className={`nav-item-fa ${activeTab === 'mood-analytics' ? 'active' : ''}`}
-            onClick={() => setActiveTab('mood-analytics')}
+            onClick={() => { setActiveTab('mood-analytics'); setMobileMenuOpen(false); }}
           >
             <i className="fa-solid fa-chart-pie"></i>
             <span>Wellness Analytics</span>
           </button>
           <button
             className={`nav-item-fa ${activeTab === 'predictor' ? 'active' : ''}`}
-            onClick={() => setActiveTab('predictor')}
+            onClick={() => { setActiveTab('predictor'); setMobileMenuOpen(false); }}
           >
             <i className="fa-solid fa-microchip"></i>
             <span>AI Predictor</span>
           </button>
           <button
             className={`nav-item-fa ${activeTab === 'profile' ? 'active' : ''}`}
-            onClick={() => setActiveTab('profile')}
+            onClick={() => { setActiveTab('profile'); setMobileMenuOpen(false); }}
           >
             <i className="fa-solid fa-user"></i>
             <span>My Profile</span>
           </button>
           <button
             className={`nav-item-fa ${activeTab === 'reports' ? 'active' : ''}`}
-            onClick={() => setActiveTab('reports')}
+            onClick={() => { setActiveTab('reports'); setMobileMenuOpen(false); }}
           >
             <i className="fa-solid fa-file-pdf"></i>
             <span>PDF Reports</span>
@@ -667,9 +733,11 @@ export const DashboardPage = () => {
                       <label className="form-label">Age</label>
                       <input
                         type="number"
+                        min="1"
+                        placeholder="e.g. 20"
                         className="form-input"
                         value={predictInputs.Age}
-                        onChange={(e) => setPredictInputs({ ...predictInputs, Age: parseInt(e.target.value) || 20 })}
+                        onChange={(e) => setPredictInputs({ ...predictInputs, Age: e.target.value })}
                         required
                       />
                     </div>
@@ -691,9 +759,11 @@ export const DashboardPage = () => {
                       <label className="form-label">Daily Unlocks</label>
                       <input
                         type="number"
+                        min="1"
+                        placeholder="e.g. 30"
                         className="form-input"
                         value={predictInputs.Daily_Unlocks}
-                        onChange={(e) => setPredictInputs({ ...predictInputs, Daily_Unlocks: parseInt(e.target.value) || 0 })}
+                        onChange={(e) => setPredictInputs({ ...predictInputs, Daily_Unlocks: e.target.value })}
                         required
                       />
                     </div>
@@ -702,9 +772,11 @@ export const DashboardPage = () => {
                       <input
                         type="number"
                         step="0.1"
+                        min="0.1"
+                        placeholder="e.g. 3.0"
                         className="form-input"
                         value={predictInputs.Avg_Daily_Usage_Hours}
-                        onChange={(e) => setPredictInputs({ ...predictInputs, Avg_Daily_Usage_Hours: parseFloat(e.target.value) || 0 })}
+                        onChange={(e) => setPredictInputs({ ...predictInputs, Avg_Daily_Usage_Hours: e.target.value })}
                         required
                       />
                     </div>
@@ -716,9 +788,11 @@ export const DashboardPage = () => {
                       <input
                         type="number"
                         step="0.1"
+                        min="0.1"
+                        placeholder="e.g. 4.0"
                         className="form-input"
                         value={predictInputs.Study_Hours}
-                        onChange={(e) => setPredictInputs({ ...predictInputs, Study_Hours: parseFloat(e.target.value) || 0 })}
+                        onChange={(e) => setPredictInputs({ ...predictInputs, Study_Hours: e.target.value })}
                         required
                       />
                     </div>
@@ -727,9 +801,11 @@ export const DashboardPage = () => {
                       <input
                         type="number"
                         step="0.1"
+                        min="0.1"
+                        placeholder="e.g. 1.5"
                         className="form-input"
                         value={predictInputs.Physical_Activity_Hours}
-                        onChange={(e) => setPredictInputs({ ...predictInputs, Physical_Activity_Hours: parseFloat(e.target.value) || 0 })}
+                        onChange={(e) => setPredictInputs({ ...predictInputs, Physical_Activity_Hours: e.target.value })}
                         required
                       />
                     </div>
@@ -738,9 +814,11 @@ export const DashboardPage = () => {
                       <input
                         type="number"
                         step="0.1"
+                        min="0.1"
+                        placeholder="e.g. 7.0"
                         className="form-input"
                         value={predictInputs.Sleep_Hours_Per_Night}
-                        onChange={(e) => setPredictInputs({ ...predictInputs, Sleep_Hours_Per_Night: parseFloat(e.target.value) || 0 })}
+                        onChange={(e) => setPredictInputs({ ...predictInputs, Sleep_Hours_Per_Night: e.target.value })}
                         required
                       />
                     </div>

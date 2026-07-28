@@ -3,7 +3,13 @@ import axios from 'axios';
 
 export const AuthContext = createContext();
 
-const API_BASE_URL = 'http://127.0.0.1:8000';
+export const getApiBaseUrl = () => {
+  if (typeof window !== 'undefined' && window.location && window.location.hostname) {
+    const hostname = window.location.hostname;
+    return `http://${hostname}:8000`;
+  }
+  return 'http://127.0.0.1:8000';
+};
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
@@ -53,7 +59,7 @@ export const AuthProvider = ({ children }) => {
   // Configure axios defaults with token
   const getApiClient = () => {
     const instance = axios.create({
-      baseURL: API_BASE_URL,
+      baseURL: getApiBaseUrl(),
     });
     if (token) {
       instance.defaults.headers.common['Authorization'] = `Bearer ${token}`;
@@ -89,7 +95,7 @@ export const AuthProvider = ({ children }) => {
 
   const login = async (email, password) => {
     try {
-      const response = await axios.post(`${API_BASE_URL}/auth/login`, {
+      const response = await axios.post(`${getApiBaseUrl()}/auth/login`, {
         email,
         password,
       });
@@ -111,7 +117,7 @@ export const AuthProvider = ({ children }) => {
 
   const sendOtp = async (fullName, email, password) => {
     try {
-      const response = await axios.post(`${API_BASE_URL}/auth/send-otp`, {
+      const response = await axios.post(`${getApiBaseUrl()}/auth/send-otp`, {
         full_name: fullName,
         email,
         password,
@@ -125,7 +131,7 @@ export const AuthProvider = ({ children }) => {
 
   const verifyOtp = async (email, otp) => {
     try {
-      const response = await axios.post(`${API_BASE_URL}/auth/verify-otp`, {
+      const response = await axios.post(`${getApiBaseUrl()}/auth/verify-otp`, {
         email,
         otp,
       });
@@ -138,7 +144,7 @@ export const AuthProvider = ({ children }) => {
 
   const forgotPassword = async (email) => {
     try {
-      const response = await axios.post(`${API_BASE_URL}/auth/forgot-password`, {
+      const response = await axios.post(`${getApiBaseUrl()}/auth/forgot-password`, {
         email,
       });
       return { success: true, message: response.data.message };
@@ -150,7 +156,7 @@ export const AuthProvider = ({ children }) => {
 
   const verifyResetOtp = async (email, otp) => {
     try {
-      const response = await axios.post(`${API_BASE_URL}/auth/verify-reset-otp`, {
+      const response = await axios.post(`${getApiBaseUrl()}/auth/verify-reset-otp`, {
         email,
         otp,
       });
@@ -163,7 +169,7 @@ export const AuthProvider = ({ children }) => {
 
   const resetPassword = async (email, newPassword) => {
     try {
-      const response = await axios.post(`${API_BASE_URL}/auth/reset-password`, {
+      const response = await axios.post(`${getApiBaseUrl()}/auth/reset-password`, {
         email,
         new_password: newPassword,
       });
@@ -208,7 +214,7 @@ export const AuthProvider = ({ children }) => {
         resetPassword,
         updateProfile,
         getApiClient,
-        apiBaseUrl: API_BASE_URL,
+        apiBaseUrl: getApiBaseUrl(),
       }}
     >
       {children}
